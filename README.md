@@ -1,39 +1,165 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+`flvm` based on [Flutter Architecture case study](https://docs.flutter.dev/app-architecture/case-study) and [Compass App](https://github.com/flutter/samples/tree/main/compass_app) example.  
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages).
+Additionally added base classes to aviod boilerplate code and improved error handlings. 
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages).
--->
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+## Basic usage
 
-## Features
+Create a View Model:
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
-
-## Getting started
-
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
-
-## Usage
-
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder.
-
-```dart
-const like = 'sample';
+```
+class MyViewModel extends FlVm {
 ```
 
-## Additional information
+Don\`t forget to call `notifyListeners()`  when you need to deliver updated:
 
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+```
+ void increment() {
+    _counter++;
+    notifyListeners();
+  }
+```
+
+Inherit your widget state from `FlVmState`:
+
+```
+class _MyScreenState extends
+FlVmWidget<MainScreen, MyViewModel> {
+```
+
+Bind your View Model:
+
+```
+ @override
+  MyViewModel bindViewModel() => MyViewModel();
+```
+
+Use `viewModelBuilder` to listen for View Model updates:
+
+```
+viewModelBuilder<MainViewModel>(
+              builder: (context, vm) {
+                return Text(
+                  '${vm.counter}',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                );
+              },
+            ),
+```
+
+## Advanced setup
+
+### Error handling
+
+Additionally use can use `onError` function to handle errors you emit in View Model.
+Add `onError` function to your widget state class:
+
+```
+  void onError(Exception error) {
+  		super.onError(error);
+  		//show error dialog here
+  }
+```
+
+Call `setError` in your View Model to emit an error:
+
+```
+ setError(Exception('Ooops...'));
+```
+
+### Commands
+
+Create a new `Command` in your View Model:
+
+```
+late Command1 login;
+
+...
+
+login = Command1<void, (String username, String password)>(
+      _login,
+      onError: _onCommandError, //optional
+    );
+```
+
+Create body function for your Command:
+
+```
+Future<Result<void>> _login((String, String) credentials) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    return Result.ok(null);
+  }
+```
+
+Also you can set optional `onError` param to handle Command errors and deliver them to UI using `setError`:
+
+```
+onError: _onCommandError,
+```
+
+```
+void _onCommandError(Exception error) {
+    setError(error);
+  }
+```
+
+In your Widget execute command where you need:
+
+```
+viewModel.login.execute((
+      _usernameController.text,
+      _passwordController.text,
+    ));
+```
+
+Use `commandBuilder` to handle Command state in widget tree:
+
+```
+commandBuilder<void>(
+                command: viewModel.login,
+                builder: (context, command) {
+                  return ElevatedButton(
+                    onPressed: _onLogin,
+                    child: command.running
+                        ? const CircularProgressIndicator()
+                        : Text('LOGIN'),
+                  );
+                },
+              ),
+```
+
+Use listener to listen to command updates outside the widget tree:
+
+```
+ @override
+  void onVmInitialized() {
+    super.onVmInitialized();
+    viewModel.login.addListener(_onLoginResult);
+  }
+
+  @override
+  void didUpdateWidget(covariant LoginScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    viewModel.login.updateListener(_onLoginResult);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    viewModel.login.removeListener(_onLoginResult);
+  }
+```
+
+```
+void _onLoginResult() {
+    if (viewModel.login.isOk) {
+      viewModel.login.clearResult();
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (context) => MainScreen()));
+    }
+
+    ///on error do nothing
+  }
+```
+
