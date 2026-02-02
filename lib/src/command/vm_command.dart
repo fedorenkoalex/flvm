@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flvm/src/model/result.dart';
 
-typedef CommandAction0<T> = Future<Result<T>> Function();
-typedef CommandAction1<T, A> = Future<Result<T>> Function(A);
-typedef CommandAction2<T, A, B> = Future<Result<T>> Function(A, B);
-typedef CommandAction3<T, A, B, C> = Future<Result<T>> Function(A, B, C);
+typedef CommandAction0<T> = Future<CommandResult<T>> Function();
+typedef CommandAction1<T, A> = Future<CommandResult<T>> Function(A);
+typedef CommandAction2<T, A, B> = Future<CommandResult<T>> Function(A, B);
+typedef CommandAction3<T, A, B, C> = Future<CommandResult<T>> Function(A, B, C);
 
 abstract class VmCommand<T> extends ChangeNotifier {
   VmCommand({ValueChanged<Exception>? onError}) : _errorHandler = onError;
@@ -16,7 +16,7 @@ abstract class VmCommand<T> extends ChangeNotifier {
   /// True when the action is running.
   bool get running => _running;
 
-  Result<T>? _result;
+  CommandResult<T>? _result;
 
   /// true if action completed with error
   bool get isError => _result is Error;
@@ -25,7 +25,7 @@ abstract class VmCommand<T> extends ChangeNotifier {
   bool get isOk => _result is Ok;
 
   /// Get last action result
-  Result<T>? get result => _result;
+  CommandResult<T>? get result => _result;
 
   /// Clear last action result
   void clearResult() {

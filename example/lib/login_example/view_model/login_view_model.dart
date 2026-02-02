@@ -10,9 +10,9 @@ class LoginViewModel extends FlVm {
     );
   }
 
-  Future<Result<void>> _login((String, String) credentials) async {
+  Future<CommandResult<void>> _login((String, String) credentials) async {
     await Future.delayed(const Duration(milliseconds: 500));
-    return Result.ok(null);
+    return CommandResult.ok(null);
   }
 
   void _onCommandError(Exception error) {

@@ -1,9 +1,9 @@
-sealed class Result<T> {
-  const Result();
+sealed class CommandResult<T> {
+  const CommandResult();
 
-  factory Result.ok(T data) => Ok(data);
+  factory CommandResult.ok(T data) => Ok(data);
 
-  factory Result.failure(Exception error, {StackTrace? trace}) =>
+  factory CommandResult.failure(Exception error, {StackTrace? trace}) =>
       Failure(error, trace: trace);
 
   bool get isOk => this is Ok;
@@ -15,13 +15,13 @@ sealed class Result<T> {
   Failure<T> get asFailure => this as Failure<T>;
 }
 
-class Ok<T> extends Result<T> {
+class Ok<T> extends CommandResult<T> {
   final T data;
 
   Ok(this.data);
 }
 
-class Failure<T> extends Result<T> {
+class Failure<T> extends CommandResult<T> {
   final Exception error;
   StackTrace? trace;
 
